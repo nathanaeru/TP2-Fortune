@@ -12,13 +12,15 @@ python main.py
 
 ## Menggunakan GUI
 
-Saat dibuka, aplikasi langsung memuat contoh bawaan dengan 25 titik.
+Saat dibuka, bidang kosong. Pilih **File → Muat contoh 25 titik** untuk mencoba data bawaan.
 
-- Pilih **Buka file TXT…** atau tekan `Ctrl+O` untuk memuat dan menghitung diagram dari file.
+- Pilih **File → Buka file TXT…** atau tekan `Ctrl+O` untuk memuat titik dari file.
 - Klik kiri pada bidang untuk menambah titik. Klik kanan di dekat titik untuk menghapusnya.
-- Setelah mengedit titik dengan mouse, pilih **Hitung Voronoi** atau tekan `F5`.
-- Pilih **Kosongkan** untuk memulai ulang dengan bidang kosong, atau **Muat contoh 25 titik** untuk mengembalikan contoh bawaan.
-- Gunakan **Tampilkan lingkaran** untuk menampilkan atau menyembunyikan lingkaran kosong terbesar.
+- Pilih **File → Hapus** atau tekan `Ctrl+Z` untuk membatalkan perubahan terakhir. Pilih **File → Hapus semua** untuk mengosongkan bidang.
+- Pilih **Edit → Bounding box…** untuk mengatur batas minimum dan maksimum sumbu X dan Y. Batas pilihan juga dipakai saat membuka file titik.
+- Tekan `Ctrl++` atau `Ctrl+-` untuk memperbesar atau memperkecil bidang. Geser tampilan lewat scrollbar atau roda mouse. Tahan `Shift` saat menggulir untuk menggeser secara horizontal.
+- Tekan **Play** atau `F5`. Sweep line bergerak dari atas ke bawah dan breakpoint pada beach line meninggalkan jejak sisi Voronoi. Penghitung di kiri bertambah saat titik diproses, sisi terbentuk, dan sel selesai. Warna sel muncul saat animasi berakhir.
+- Gunakan menu **Tampilan** untuk mengatur visibilitas lingkaran kosong terbesar.
 
 ## Format file titik
 
@@ -31,11 +33,13 @@ Tulis satu pasangan koordinat `x y` per baris. Gunakan spasi atau koma sebagai p
 540.5 340
 ```
 
-Sumbu `x` bertambah ke kanan dan sumbu `y` bertambah ke bawah. GUI menyesuaikan bounding box bila koordinat file berada di luar bidang bawaan.
+Sumbu `x` bertambah ke kanan dan sumbu `y` bertambah ke bawah. Jika batas belum diatur melalui menu Edit, GUI menyesuaikan bounding box bila koordinat file berada di luar bidang bawaan.
 
-## Keterbatasan saat ini
+## Cara kerja
 
-Pada contoh bawaan, modul Fortune hanya mengembalikan segmen dengan panjang nol. GUI mengabaikan segmen tersebut, sehingga titik dan lingkaran terlihat dengan jumlah sisi 0.
+Sapuan Fortune memproses peristiwa titik dan lingkaran untuk menemukan pasangan titik yang selnya bertetangga. Setiap sel dibentuk dengan memotong bounding box pada garis bagi tegak lurus antara titik dan tetangganya. Lingkaran kosong terbesar dipilih dari peristiwa lingkaran yang pusatnya berada di dalam bounding box.
+
+Saat diputar, setiap sisi digambar hanya pada bagian yang sudah dijangkau beach line. Referensi visualisasi: [Fortune's Algorithm, Tufts COMP 163](https://www.eecs.tufts.edu/~vporok01/c163/).
 
 ## Pengungkapan bantuan AI
 

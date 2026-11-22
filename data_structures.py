@@ -20,7 +20,7 @@ class Event:
         self.y = float(y)
 
     def __lt__(self, other):
-        """Compares events primarily by y-coordinate from top to bottom then x-coordinate."""
+        """Order events from bottom to top, then from left to right."""
         if self.y != other.y:
             return self.y > other.y
         return self.x < other.x

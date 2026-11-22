@@ -7,73 +7,101 @@ def get_parabola_y(site: Point, sweep_y: float, x: float) -> float:
     dp = 2 * (site.y - sweep_y)
     if dp == 0:
         return site.y
-    return ((x - site.x) ** 2 + site.y**2 - sweep_y**2) / dp
+    return sweep_y + dp / 4 + ((x - site.x) ** 2) / dp
+
+
+def trace_edge(start: Point, end: Point, site: Point, sweep_y: float):
+    """Keep the part of a bisector already reached by a decreasing-y beach line."""
+    delta = site.y - sweep_y
+    if delta <= 0:
+        return None
+
+    # For P(t) = start + t * (end - start), solve parabola_y(P.x) <= P.y.
+    # The quadratic is convex, so the traced portion is a single interval.
+    dx, dy = end.x - start.x, end.y - start.y
+    offset = start.x - site.x
+    a = dx * dx
+    b = offset * dx - delta * dy
+    c = offset * offset - 2 * delta * (start.y - sweep_y - delta / 2)
+    at_end = a + 2 * b + c
+    if c <= 0 and at_end <= 0:
+        return start, end
+
+    if a == 0:
+        if c > 0 and at_end > 0:
+            return None
+        crossing = c / (c - at_end)
+        low, high = (0, crossing) if c <= 0 else (crossing, 1)
+    else:
+        discriminant = b * b - a * c
+        if discriminant <= 0:
+            return None
+        q = -b - math.copysign(math.sqrt(discriminant), b)
+        first, second = sorted((q / a, c / q))
+        low, high = max(0, first), min(1, second)
+    if low >= high:
+        return None
+    return Point(start.x + low * dx, start.y + low * dy), Point(start.x + high * dx, start.y + high * dy)
 
 
 def get_intersection(site1: Point, site2: Point, sweep_y: float) -> float:
-    """Computes the x-coordinate of the intersection breakpoint between two adjacent parabolic arcs."""
-    p1 = site1
-    p2 = site2
+    """Return the breakpoint between the left and right arcs for decreasing sweep y."""
+    p = site1.y - sweep_y
+    q = site2.y - sweep_y
+    dx = site2.x - site1.x
+    dy = site2.y - site1.y
+    if dy == 0:
+        return site1.x + dx / 2
+    if p == 0:
+        return site1.x
+    if q == 0:
+        return site2.x
 
-    if p1.y == p2.y:
-        return (p1.x + p2.x) / 2.0
-
-    d1 = 2.0 * (p1.y - sweep_y)
-    d2 = 2.0 * (p2.y - sweep_y)
-
-    if d1 == 0:
-        return p1.x
-    if d2 == 0:
-        return p2.x
-
-    a1 = 1.0 / d1
-    b1 = -2.0 * p1.x / d1
-    c1 = (p1.x**2 + p1.y**2 - sweep_y**2) / d1
-
-    a2 = 1.0 / d2
-    b2 = -2.0 * p2.x / d2
-    c2 = (p2.x**2 + p2.y**2 - sweep_y**2) / d2
-
-    a = a1 - a2
-    b = b1 - b2
-    c = c1 - c2
-
-    disc = b**2 - 4 * a * c
-    if disc < 0:
-        disc = 0.0
-
-    x1 = (-b + math.sqrt(disc)) / (2 * a)
-    x2 = (-b - math.sqrt(disc)) / (2 * a)
-
-    if p1.y > p2.y:
-        return max(x1, x2)
+    root = math.sqrt(p) * math.sqrt(q) * math.hypot(dx, dy)
+    # Rationalize the numerator when subtraction could lose precision.
+    if dx >= 0:
+        offset = p * (dx * dx + q * dy) / (p * dx + root)
     else:
-        return min(x1, x2)
+        offset = (root - p * dx) / dy
+    return site1.x + offset
 
 
 def get_circumcircle(p1: Point, p2: Point, p3: Point):
-    """Computes the circumcenter, radius, and lowest sweep-line y-coordinate for three points."""
-    d = 2 * (p1.x * (p2.y - p3.y) + p2.x * (p3.y - p1.y) + p3.x * (p1.y - p2.y))
-    if abs(d) < 1e-9:
+    """Return the circumcenter, radius, and bottom-to-top circle event position."""
+    bx, by = p2.x - p1.x, p2.y - p1.y
+    cx, cy = p3.x - p1.x, p3.y - p1.y
+    determinant = 2 * (bx * cy - by * cx)
+    if determinant == 0:
         return None, None, None
 
-    ux = (
-        (p1.x**2 + p1.y**2) * (p2.y - p3.y)
-        + (p2.x**2 + p2.y**2) * (p3.y - p1.y)
-        + (p3.x**2 + p3.y**2) * (p1.y - p2.y)
-    ) / d
+    b_squared = bx * bx + by * by
+    c_squared = cx * cx + cy * cy
+    ux = (b_squared * cy - c_squared * by) / determinant
+    uy = (bx * c_squared - cx * b_squared) / determinant
+    center = Point(p1.x + ux, p1.y + uy)
+    radius = math.hypot(ux, uy)
+    return center, radius, center.y - radius
 
-    uy = (
-        (p1.x**2 + p1.y**2) * (p3.x - p2.x)
-        + (p2.x**2 + p2.y**2) * (p1.x - p3.x)
-        + (p3.x**2 + p3.y**2) * (p2.x - p1.x)
-    ) / d
 
-    center = Point(ux, uy)
-    radius = math.hypot(p1.x - ux, p1.y - uy)
-    y_sweep = uy + radius
-
-    return center, radius, y_sweep
+def clip_polygon(polygon: list[Point], nx: float, ny: float, limit: float) -> list[Point]:
+    """Keep the part of the polygon satisfying nx*x + ny*y <= limit."""
+    if not polygon:
+        return []
+    clipped = []
+    previous = polygon[-1]
+    previous_distance = nx * previous.x + ny * previous.y - limit
+    for current in polygon:
+        distance = nx * current.x + ny * current.y - limit
+        if (distance < 0 < previous_distance) or (previous_distance < 0 < distance):
+            ratio = previous_distance / (previous_distance - distance)
+            clipped.append(Point(
+                previous.x + ratio * (current.x - previous.x),
+                previous.y + ratio * (current.y - previous.y),
+            ))
+        if distance <= 0:
+            clipped.append(current)
+        previous, previous_distance = current, distance
+    return clipped
 
 
 def clip_line(p1: Point, p2: Point, width: float, height: float):
