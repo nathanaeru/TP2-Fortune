@@ -2,6 +2,10 @@
 
 Tugas Pemrograman 2 Geometri Komputasional. Aplikasi desktop ini menggunakan Tkinter untuk menerima titik dan menampilkan hasil perhitungan modul Fortune.
 
+## Members
+* Nathanael Leander Herdanatra - 2406421320
+* Hasanul Muttaqin - 2406413331
+
 ## Menjalankan aplikasi
 
 Gunakan Python 3.10 atau lebih baru dengan Tkinter. Jalankan dari folder proyek.
@@ -41,6 +45,7 @@ Sapuan Fortune memproses peristiwa titik dan lingkaran untuk menemukan pasangan 
 
 Saat diputar, setiap sisi digambar hanya pada bagian yang sudah dijangkau beach line. Referensi visualisasi: [Fortune's Algorithm, Tufts COMP 163](https://www.eecs.tufts.edu/~vporok01/c163/).
 
-## Pengungkapan bantuan AI
+## Bantuan AI
 
+Gemini 3.6 Flash digunakan untuk membantu memahami dan generasi awal struktur data dan algoritma Fortune
 OpenAI Codex digunakan untuk membantu membuat GUI Tkinter dan titik masuk aplikasi (`gui.py` dan `main.py`)
